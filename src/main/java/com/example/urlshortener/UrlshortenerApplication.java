@@ -15,16 +15,4 @@ public class UrlshortenerApplication {
 	public static void main(String[] args) {
 		SpringApplication.run(UrlshortenerApplication.class, args);
 	}
-    @Bean
-    CommandLineRunner testDb(UrlRepository repo) {
-        return args -> {
-            Url url = new Url();
-            url.setLongUrl("https://google.com");
-            url.setCreatedAt(LocalDateTime.now());
-
-            repo.save(url);
-
-            System.out.println("Saved URL with ID: " + url.getId());
-        };
-    }
 }
