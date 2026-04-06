@@ -30,4 +30,20 @@ public class UrlService {
 
         return shortCode;
     }
+
+    public String getOriginalUrl(String shortCode) {
+
+        Url url = repository.findByShortCode(shortCode)
+                .orElseThrow(() -> new IllegalArgumentException("URL not found for code: " + shortCode));
+
+        if (url.getExpiryAt() != null &&
+                url.getExpiryAt().isBefore(LocalDateTime.now())) {
+            throw new IllegalStateException("Link expired");
+        }
+
+        url.setClickCount(url.getClickCount() + 1);
+        repository.save(url);
+
+        return url.getLongUrl();
+    }
 }
