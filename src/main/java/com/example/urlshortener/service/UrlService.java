@@ -1,0 +1,33 @@
+package com.example.urlshortener.service;
+
+import com.example.urlshortener.model.Url;
+import com.example.urlshortener.repository.UrlRepository;
+import com.example.urlshortener.util.Base62Encoder;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
+
+@Service
+@RequiredArgsConstructor
+public class UrlService {
+
+    private final UrlRepository repository;
+    private final Base62Encoder encoder;
+
+    public String shortenUrl(String longUrl) {
+
+        Url url = new Url();
+        url.setLongUrl(longUrl);
+        url.setCreatedAt(LocalDateTime.now());
+
+        url = repository.save(url);
+
+        String shortCode = encoder.encode(url.getId());
+
+        url.setShortCode(shortCode);
+        repository.save(url);
+
+        return shortCode;
+    }
+}
