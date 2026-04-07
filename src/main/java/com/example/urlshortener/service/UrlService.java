@@ -11,6 +11,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -22,6 +23,12 @@ public class UrlService {
 
     public String shortenUrl(String longUrl) {
 
+        Optional<Url> existing = repository.findByLongUrl(longUrl);
+
+        if (existing.isPresent()) {
+            System.out.println("Duplicate URL found");
+            return existing.get().getShortCode();
+        }
         Url url = new Url();
         url.setLongUrl(longUrl);
         url.setCreatedAt(LocalDateTime.now());
