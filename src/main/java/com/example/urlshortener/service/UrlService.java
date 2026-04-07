@@ -50,6 +50,15 @@ public class UrlService {
 
     public String getOriginalUrl(String shortCode) {
 
+        Url url = repository.findByShortCode(shortCode)
+                .orElseThrow(() ->
+                        new ResponseStatusException(HttpStatus.NOT_FOUND, "URL not found"));
+
+        if (url.getExpiryAt() != null &&
+                url.getExpiryAt().isBefore(LocalDateTime.now())) {
+            throw new ResponseStatusException(HttpStatus.GONE, "Link expired");
+        }
+
         String cachedUrl = redisTemplate.opsForValue().get(shortCode);
 
         if (cachedUrl != null) {
@@ -61,15 +70,6 @@ public class UrlService {
         }
 
         System.out.println("❄️ Cache MISS");
-
-        Url url = repository.findByShortCode(shortCode)
-                .orElseThrow(() ->
-                        new ResponseStatusException(HttpStatus.NOT_FOUND, "URL not found"));
-
-        if (url.getExpiryAt() != null &&
-                url.getExpiryAt().isBefore(LocalDateTime.now())) {
-            throw new ResponseStatusException(HttpStatus.GONE, "Link expired");
-        }
 
         redisTemplate.opsForValue().increment("click:" + shortCode);
 
