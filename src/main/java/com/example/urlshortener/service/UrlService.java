@@ -9,6 +9,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 
 @Service
@@ -41,24 +42,28 @@ public class UrlService {
 
         if (cachedUrl != null) {
             System.out.println("🔥 Cache HIT");
+
+            redisTemplate.opsForValue().increment("click:" + shortCode);
+
             return cachedUrl;
         }
 
         System.out.println("❄️ Cache MISS");
 
         Url url = repository.findByShortCode(shortCode)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "URL not found"));
+                .orElseThrow(() ->
+                        new ResponseStatusException(HttpStatus.NOT_FOUND, "URL not found"));
 
         if (url.getExpiryAt() != null &&
                 url.getExpiryAt().isBefore(LocalDateTime.now())) {
-            throw new RuntimeException("Link expired");
+            throw new ResponseStatusException(HttpStatus.GONE, "Link expired");
         }
 
-        url.setClickCount(url.getClickCount() + 1);
-        repository.save(url);
+        redisTemplate.opsForValue().increment("click:" + shortCode);
 
-        redisTemplate.opsForValue().set(shortCode, url.getLongUrl());
-        System.out.println("Looking for: " + shortCode);
+        redisTemplate.opsForValue()
+                .set(shortCode, url.getLongUrl(), Duration.ofHours(1));
+
         return url.getLongUrl();
     }
 }
