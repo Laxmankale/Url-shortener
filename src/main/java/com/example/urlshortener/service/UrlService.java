@@ -1,5 +1,6 @@
 package com.example.urlshortener.service;
 
+import com.example.urlshortener.dto.UrlRequest;
 import com.example.urlshortener.model.Url;
 import com.example.urlshortener.repository.UrlRepository;
 import com.example.urlshortener.util.Base62Encoder;
@@ -21,10 +22,10 @@ public class UrlService {
     private final Base62Encoder encoder;
     private final StringRedisTemplate redisTemplate;
 
-    public String shortenUrl(String longUrl) {
+    public String shortenUrl(UrlRequest request) {
+        String longUrl = request.getUrl();
 
         Optional<Url> existing = repository.findByLongUrl(longUrl);
-
         if (existing.isPresent()) {
             System.out.println("Duplicate URL found");
             return existing.get().getShortCode();
@@ -32,6 +33,10 @@ public class UrlService {
         Url url = new Url();
         url.setLongUrl(longUrl);
         url.setCreatedAt(LocalDateTime.now());
+
+        if (request.getExpiryMinutes() != null) {
+            url.setExpiryAt(LocalDateTime.now().plusMinutes(request.getExpiryMinutes()));
+        }
 
         url = repository.save(url);
 
